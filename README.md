@@ -79,3 +79,13 @@ UI:
   - [ ] Tooltips
   - [ ] Hover previews
 
+## Licenses
+
+All the relevant license texts are available as plain text files in this repository.
+
+The software (all source code) in this repository is distributed under a dual MIT/Apache-2 license.
+
+The following assets in this repository are foreign, and use different licenses:
+ - `assets/iyes2d_editor/font/Ubuntu*.ttf`: the Ubuntu font, under the Ubuntu font license
+
+All other assets in this repository were created specifically for this project and are distributed under CC0.

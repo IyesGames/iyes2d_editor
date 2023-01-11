@@ -1,2 +1,26 @@
-[
-]
+({
+    "iyes2d_editor.font.regular": File (
+        path: "iyes2d_editor/font/Ubuntu-R.ttf",
+    ),
+    "iyes2d_editor.font.bold": File (
+        path: "iyes2d_editor/font/Ubuntu-B.ttf",
+    ),
+    "iyes2d_editor.image.ui.toolbar.depressed": File (
+        path: "iyes2d_editor/image/ui/toolbar_depressed.png",
+    ),
+    "iyes2d_editor.image.ui.toolbar.pressed": File (
+        path: "iyes2d_editor/image/ui/toolbar_pressed.png",
+    ),
+    "iyes2d_editor.image.ui.toolbar.hover": File (
+        path: "iyes2d_editor/image/ui/toolbar_hover.png",
+    ),
+    "iyes2d_editor.image.ui.toolbar.disabled": File (
+        path: "iyes2d_editor/image/ui/toolbar_disabled.png",
+    ),
+    "iyes2d_editor.image.icon.tool.selectentities": File (
+        path: "iyes2d_editor/image/icon/tool/selectentities.png",
+    ),
+    "iyes2d_editor.image.icon.tool.selecttilemap": File (
+        path: "iyes2d_editor/image/icon/tool/selecttilemap.png",
+    ),
+})

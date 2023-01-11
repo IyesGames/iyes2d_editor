@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 iyes_loopless = "0.9"
 iyes_scene_tools = "0.2"
+iyes_bevy_util = { git = "https://github.com/IyesGames/iyes_bevy_util" }
 iyes2d_autotilemap = { git = "https://github.com/IyesGames/iyes2d_autotilemap" }
 iyes_blueprints = { git = "https://github.com/IyesGames/iyes_blueprints" }
 rand = "0.8.5"
@@ -50,8 +51,11 @@ features = [
     "png",
 ]
 
+[dev-dependencies.bevy_ecs_tilemap]
+version = "0.9"
+
 [patch."https://github.com/IyesGames/iyes_blueprints"]
-# iyes_blueprints = { path = "../iyes_blueprints/" }
+iyes_blueprints = { path = "../iyes_blueprints/" }
 
 [patch."https://github.com/IyesGames/iyes2d_autotilemap"]
-# iyes2d_autotilemap = { path = "../iyes2d_autotilemap/" }
+iyes2d_autotilemap = { path = "../iyes2d_autotilemap/" }

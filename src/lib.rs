@@ -4,6 +4,7 @@ use crate::crate_prelude::*;
 pub mod tilemap;
 
 pub mod camera;
+mod assets;
 mod ui;
 mod misc;
 
@@ -28,13 +29,22 @@ pub enum SystemLabels {
 }
 
 pub struct EditorPlugin<S: StateData> {
-    pub state: S,
+    pub asset_load_state: S,
+    pub editor_state: S,
 }
 
 impl<S: StateData> Plugin for EditorPlugin<S> {
     fn build(&self, app: &mut App) {
-        app.add_plugin(crate::camera::CameraPlugin { state: self.state.clone() });
+        app.add_plugin(crate::assets::EditorAssetsPlugin {
+            asset_load_state: self.asset_load_state.clone(),
+            editor_state: self.editor_state.clone(),
+        });
+        app.add_plugin(crate::camera::CameraPlugin {
+            state: self.editor_state.clone()
+        });
         #[cfg(feature = "bevy_ecs_tilemap")]
-        app.add_plugin(crate::tilemap::TilemapEditorPlugin { state: self.state.clone() });
+        app.add_plugin(crate::tilemap::TilemapEditorPlugin {
+            state: self.editor_state.clone()
+        });
     }
 }

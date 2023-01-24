@@ -38,5 +38,6 @@ impl<S: StateData> Plugin for EditorAssetsPlugin<S> {
                 ])
                 .with_collection::<EditorAssets>()
         );
+        app.add_exit_system(self.editor_state.clone(), remove_resource::<EditorAssets>);
     }
 }

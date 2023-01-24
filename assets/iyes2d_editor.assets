@@ -20,6 +20,9 @@
     "iyes2d_editor.image.icon.tool.selectentities": File (
         path: "iyes2d_editor/image/icon/tool/selectentities.png",
     ),
+    "iyes2d_editor.image.icon.tool.translation": File (
+        path: "iyes2d_editor/image/icon/tool/translation.png",
+    ),
     "iyes2d_editor.image.icon.tool.selecttilemap": File (
         path: "iyes2d_editor/image/icon/tool/selecttilemap.png",
     ),

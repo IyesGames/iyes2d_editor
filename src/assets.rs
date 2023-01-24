@@ -17,6 +17,8 @@ pub struct EditorAssets {
     pub(crate) image_ui_toolbar_disabled: Handle<Image>,
     #[asset(key = "iyes2d_editor.image.icon.tool.selectentities")]
     pub(crate) image_icon_tool_selectentities: Handle<Image>,
+    #[asset(key = "iyes2d_editor.image.icon.tool.translation")]
+    pub(crate) image_icon_tool_translation: Handle<Image>,
     #[asset(key = "iyes2d_editor.image.icon.tool.selecttilemap")]
     pub(crate) image_icon_tool_selecttilemap: Handle<Image>,
 }

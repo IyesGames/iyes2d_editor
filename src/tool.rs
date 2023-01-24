@@ -9,6 +9,7 @@ use std::ops::{BitOr, BitOrAssign};
 pub enum Tool {
     #[default]
     SelectEntities = 0,
+    Translation = 1,
     // tilemap tools
     SelectTilemap = 16,
 }
@@ -17,6 +18,7 @@ impl Tool {
     pub(crate) fn icon(self, assets: &EditorAssets) -> Handle<Image> {
         match self {
             Tool::SelectEntities => assets.image_icon_tool_selectentities.clone(),
+            Tool::Translation => assets.image_icon_tool_translation.clone(),
             Tool::SelectTilemap => assets.image_icon_tool_selecttilemap.clone(),
         }
     }

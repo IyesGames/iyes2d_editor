@@ -23,7 +23,13 @@ mod crate_prelude {
     pub use iyes_loopless::prelude::*;
     pub use iyes_bevy_util::prelude::*;
     pub use crate::tool::*;
+    pub use crate::assets::EditorAssets;
+    pub use crate::EditorCleanup;
 }
+
+/// All entities with this component will be despawned recursively when exiting the editor state
+#[derive(Component)]
+pub struct EditorCleanup;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SystemLabel)]
 pub enum SystemLabels {
@@ -50,5 +56,6 @@ impl<S: StateData> Plugin for EditorPlugin<S> {
         app.add_plugin(crate::tilemap::TilemapEditorPlugin {
             state: self.editor_state.clone()
         });
+        app.add_exit_system(self.editor_state.clone(), despawn_with_recursive::<EditorCleanup>);
     }
 }

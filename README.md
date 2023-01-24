@@ -76,7 +76,7 @@ UI:
   - [x] Toolbar for selecting different tools
   - [ ] Blueprint list
   - [ ] Component selection
-  - [ ] Tooltips
+  - [x] Tooltips
   - [ ] Hover previews
 
 ## Licenses

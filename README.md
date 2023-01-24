@@ -73,7 +73,7 @@ Scene Support:
   - [ ] "Blueprints pattern": spawn (or load from scene) partial entities and complete their initialization (flesh them out with additional components) from code/systems (using `iyes_blueprints`)
 
 UI:
-  - [ ] Toolbar for selecting different tools
+  - [x] Toolbar for selecting different tools
   - [ ] Blueprint list
   - [ ] Component selection
   - [ ] Tooltips

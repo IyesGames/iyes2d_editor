@@ -4,6 +4,8 @@ use crate::crate_prelude::*;
 pub mod tilemap;
 
 pub mod camera;
+pub mod tool;
+
 mod assets;
 mod ui;
 mod misc;
@@ -20,6 +22,7 @@ mod crate_prelude {
     pub use bevy::ecs::schedule::StateData;
     pub use iyes_loopless::prelude::*;
     pub use iyes_bevy_util::prelude::*;
+    pub use crate::tool::*;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SystemLabel)]
@@ -35,6 +38,7 @@ pub struct EditorPlugin<S: StateData> {
 
 impl<S: StateData> Plugin for EditorPlugin<S> {
     fn build(&self, app: &mut App) {
+        app.add_loopless_state(crate::tool::Tool::default());
         app.add_plugin(crate::assets::EditorAssetsPlugin {
             asset_load_state: self.asset_load_state.clone(),
             editor_state: self.editor_state.clone(),

@@ -22,6 +22,7 @@ impl<S: StateData> Plugin for TilemapEditorPlugin<S> {
         app.add_system(
             cursor_tilemap_select
                 .run_in_state(self.state.clone())
+                .run_for_tools(Tool::SelectTilemap.into())
                 .run_on_mouse_press(MouseButton::Left)
                 .label(SystemLabels::TilemapSelect)
                 .after(crate::camera::SystemLabels::WorldCursor)

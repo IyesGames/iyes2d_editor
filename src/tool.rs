@@ -1,5 +1,6 @@
 use crate::crate_prelude::*;
 use crate::assets::EditorAssets;
+use crate::ui::tooltip::TooltipText;
 use std::ops::{BitOr, BitOrAssign};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
@@ -20,6 +21,23 @@ impl Tool {
             Tool::SelectEntities => assets.image_icon_tool_selectentities.clone(),
             Tool::Translation => assets.image_icon_tool_translation.clone(),
             Tool::SelectTilemap => assets.image_icon_tool_selecttilemap.clone(),
+        }
+    }
+
+    pub(crate) fn tooltip(self) -> TooltipText {
+        match self {
+            Tool::SelectEntities => TooltipText {
+                title: "Select Entities".into(),
+                text: "Click on entities to select them.\nThen, use other tools to manipulate the selected entities.".into(),
+            },
+            Tool::Translation => TooltipText {
+                title: "Move/Translate (Transform Editing)".into(),
+                text: "Move entities with the mouse, changing the translation of their Transform.".into(),
+            },
+            Tool::SelectTilemap => TooltipText {
+                title: "Select the Active Tilemap".into(),
+                text: "Tilemap editing tools will operate on the currently selected tilemap.".into(),
+            },
         }
     }
 }

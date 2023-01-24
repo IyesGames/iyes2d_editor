@@ -1,4 +1,5 @@
 use crate::crate_prelude::*;
+use crate::ui::tooltip::TooltipText;
 
 pub(crate) struct ToolbarPlugin<S: StateData> {
     pub state: S,
@@ -34,7 +35,7 @@ fn setup_toolbar(
                 align_items: AlignItems::FlexStart,
                 ..Default::default()
             },
-            z_index: ZIndex::Global(i32::MAX), // TODO: make this configurable
+            z_index: ZIndex::Global(9001), // TODO: make this configurable
             ..Default::default()
         },
         EditorCleanup,
@@ -73,6 +74,7 @@ fn setup_toolbar(
                 ..Default::default()
             },
             ToolbarTool(tool),
+            tool.tooltip(),
         )).id();
         let icon = commands.spawn((
             ImageBundle {

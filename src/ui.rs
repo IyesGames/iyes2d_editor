@@ -1,6 +1,7 @@
 use crate::crate_prelude::*;
 
-mod toolbar;
+pub(crate) mod toolbar;
+pub(crate) mod tooltip;
 
 pub(crate) struct EditorUiPlugin<S: StateData> {
     pub state: S,
@@ -9,6 +10,9 @@ pub(crate) struct EditorUiPlugin<S: StateData> {
 impl<S: StateData> Plugin for EditorUiPlugin<S> {
     fn build(&self, app: &mut App) {
         app.add_plugin(toolbar::ToolbarPlugin {
+            state: self.state.clone(),
+        });
+        app.add_plugin(tooltip::TooltipPlugin {
             state: self.state.clone(),
         });
     }

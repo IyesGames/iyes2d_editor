@@ -18,6 +18,7 @@ pub mod prelude {
 /// Common prelude for internal use
 mod crate_prelude {
     pub use bevy::prelude::*;
+    pub use bevy::ui::FocusPolicy;
     pub use bevy::utils::{HashMap, HashSet, Duration, Instant};
     pub use bevy::ecs::schedule::StateData;
     pub use iyes_loopless::prelude::*;
@@ -50,6 +51,9 @@ impl<S: StateData> Plugin for EditorPlugin<S> {
             editor_state: self.editor_state.clone(),
         });
         app.add_plugin(crate::camera::CameraPlugin {
+            state: self.editor_state.clone()
+        });
+        app.add_plugin(crate::ui::EditorUiPlugin {
             state: self.editor_state.clone()
         });
         #[cfg(feature = "bevy_ecs_tilemap")]

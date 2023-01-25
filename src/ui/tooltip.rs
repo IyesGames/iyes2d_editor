@@ -89,7 +89,7 @@ fn tooltip_spawner(
                     let outer = commands.spawn((
                         NodeBundle {
                             focus_policy: FocusPolicy::Pass,
-                            z_index: ZIndex::Global(9010), // TODO: make this configurable
+                            z_index: ZIndex::Global(9100), // TODO: make this configurable
                             background_color: BackgroundColor(Color::BLACK),
                             style: Style {
                                 position_type: PositionType::Absolute,

@@ -35,7 +35,7 @@ fn setup_toolbar(
                 align_items: AlignItems::FlexStart,
                 ..Default::default()
             },
-            z_index: ZIndex::Global(9001), // TODO: make this configurable
+            z_index: ZIndex::Global(9010), // TODO: make this configurable
             ..Default::default()
         },
         EditorCleanup,

@@ -74,9 +74,10 @@ Scene Support:
 
 UI:
   - [x] Toolbar for selecting different tools
+  - [x] Tooltips
+  - [x] Window Management: floating windows for UI panels
   - [ ] Blueprint list
   - [ ] Component selection
-  - [x] Tooltips
   - [ ] Hover previews
 
 ## Licenses

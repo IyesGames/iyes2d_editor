@@ -278,6 +278,12 @@ pub fn spawn_panel(
     let title = commands.spawn(
         TextBundle {
             style: Style {
+                margin: UiRect {
+                    left: Val::Px(4.0),
+                    right: Val::Px(4.0),
+                    top: Val::Px(0.0),
+                    bottom: Val::Px(2.0),
+                },
                 ..Default::default()
             },
             text: Text::from_section(title, TextStyle {
@@ -288,7 +294,32 @@ pub fn spawn_panel(
             ..Default::default()
         }
     ).id();
-    commands.entity(titlebar).push_children(&[title]);
+    let mini_butt = commands.spawn((
+        ButtonBundle {
+            style: Style {
+                align_items: AlignItems::Center,
+                align_content: AlignContent::Center,
+                justify_content: JustifyContent::Center,
+                size: Size::new(Val::Px(16.0), Val::Px(16.0)),
+                ..Default::default()
+            },
+            image: UiImage(assets.image_ui_smallbutt_depressed.clone()),
+            ..Default::default()
+        },
+        TooltipText {
+            title: "Minify".into(),
+            text: "The Panel will collapse into a button at the bottom of the screen.\nAlternatively, you can double-click the title to collapse into the titlebar.".into(),
+        },
+    )).id();
+    let mini_icon = commands.spawn((
+        ImageBundle {
+            focus_policy: FocusPolicy::Pass,
+            image: UiImage(assets.image_icon_wm_minify.clone()),
+            ..Default::default()
+        },
+    )).id();
+    commands.entity(mini_butt).push_children(&[mini_icon]);
+    commands.entity(titlebar).push_children(&[mini_butt, title]);
     commands.entity(container).push_children(&[titlebar, contents]);
 
     contents

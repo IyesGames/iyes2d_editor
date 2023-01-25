@@ -5,6 +5,12 @@
     "iyes2d_editor.font.bold": File (
         path: "iyes2d_editor/font/Ubuntu-B.ttf",
     ),
+    "iyes2d_editor.image.ui.smallbutt.depressed": File (
+        path: "iyes2d_editor/image/ui/smallbutt_depressed.png",
+    ),
+    "iyes2d_editor.image.ui.smallbutt.pressed": File (
+        path: "iyes2d_editor/image/ui/smallbutt_pressed.png",
+    ),
     "iyes2d_editor.image.ui.toolbar.depressed": File (
         path: "iyes2d_editor/image/ui/toolbar_depressed.png",
     ),
@@ -16,6 +22,9 @@
     ),
     "iyes2d_editor.image.ui.toolbar.disabled": File (
         path: "iyes2d_editor/image/ui/toolbar_disabled.png",
+    ),
+    "iyes2d_editor.image.icon.wm.minify": File (
+        path: "iyes2d_editor/image/icon/wm/minify.png",
     ),
     "iyes2d_editor.image.icon.tool.selectentities": File (
         path: "iyes2d_editor/image/icon/tool/selectentities.png",

@@ -7,6 +7,10 @@ pub struct EditorAssets {
     pub(crate) font: Handle<Font>,
     #[asset(key = "iyes2d_editor.font.bold")]
     pub(crate) font_bold: Handle<Font>,
+    #[asset(key = "iyes2d_editor.image.ui.smallbutt.depressed")]
+    pub(crate) image_ui_smallbutt_depressed: Handle<Image>,
+    #[asset(key = "iyes2d_editor.image.ui.smallbutt.pressed")]
+    pub(crate) image_ui_smallbutt_pressed: Handle<Image>,
     #[asset(key = "iyes2d_editor.image.ui.toolbar.depressed")]
     pub(crate) image_ui_toolbar_depressed: Handle<Image>,
     #[asset(key = "iyes2d_editor.image.ui.toolbar.pressed")]
@@ -15,6 +19,8 @@ pub struct EditorAssets {
     pub(crate) image_ui_toolbar_hover: Handle<Image>,
     #[asset(key = "iyes2d_editor.image.ui.toolbar.disabled")]
     pub(crate) image_ui_toolbar_disabled: Handle<Image>,
+    #[asset(key = "iyes2d_editor.image.icon.wm.minify")]
+    pub(crate) image_icon_wm_minify: Handle<Image>,
     #[asset(key = "iyes2d_editor.image.icon.tool.selectentities")]
     pub(crate) image_icon_tool_selectentities: Handle<Image>,
     #[asset(key = "iyes2d_editor.image.icon.tool.translation")]

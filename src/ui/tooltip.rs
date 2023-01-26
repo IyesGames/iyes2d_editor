@@ -47,10 +47,10 @@ fn compute_tooltip_position(
         if cursor_position.x < window.width() / 2.0 {
             rect.left = Val::Px(cursor_position.x);
         } else {
-            rect.right = Val::Px(cursor_position.x);
+            rect.right = Val::Px(window.width() - cursor_position.x);
         }
         if cursor_position.y < window.height() / 2.0 {
-            rect.bottom = Val::Px(window.height() - cursor_position.y);
+            rect.bottom = Val::Px(cursor_position.y);
         } else {
             rect.top = Val::Px(window.height() - cursor_position.y);
         }
@@ -102,7 +102,7 @@ fn tooltip_spawner(
                         EditorCleanup,
                         TooltipDespawnTimer {
                             e_linked: e,
-                            timer: Timer::new(Duration::from_millis(2000), TimerMode::Once),
+                            timer: Timer::new(Duration::from_millis(1000), TimerMode::Once),
                         },
                     )).id();
                     let inner = commands.spawn(

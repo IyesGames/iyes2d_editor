@@ -3,6 +3,8 @@ use bevy::input::mouse::MouseMotion;
 use crate::crate_prelude::*;
 use crate::ui::tooltip::TooltipText;
 
+use super::SimpleButtVisual;
+
 pub struct PanelPlugin<S: StateData> {
     pub state: S,
 }
@@ -192,8 +194,10 @@ fn panel_titlebar_drag(
                 delta += ev.delta;
             }
             let mut p_style = q_panel.get_mut(titlebar.panel).unwrap();
-            p_style.position.left.try_add_assign(Val::Px(delta.x)).unwrap();
-            p_style.position.top.try_add_assign(Val::Px(delta.y)).unwrap();
+            p_style.position.left.try_add_assign(Val::Px(delta.x)).ok();
+            p_style.position.right.try_sub_assign(Val::Px(delta.x)).ok();
+            p_style.position.top.try_add_assign(Val::Px(delta.y)).ok();
+            p_style.position.bottom.try_sub_assign(Val::Px(delta.y)).ok();
         }
     }
 }
@@ -221,10 +225,10 @@ pub fn spawn_panel(
                 padding: UiRect::all(Val::Px(2.0)),
                 position_type: PositionType::Absolute,
                 position: UiRect {
-                    top: Val::Px(80.0),
-                    left: Val::Px(0.0),
+                    top: Val::Px(0.0),
+                    right: Val::Px(64.0),
                     bottom: Val::Auto,
-                    right: Val::Auto,
+                    left: Val::Auto,
                 },
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Stretch,
@@ -246,6 +250,7 @@ pub fn spawn_panel(
                 flex_grow: 0.0,
                 padding: UiRect::all(Val::Px(2.0)),
                 align_items: AlignItems::Center,
+                justify_content: JustifyContent::SpaceBetween,
                 ..Default::default()
             },
             ..Default::default()
@@ -267,6 +272,7 @@ pub fn spawn_panel(
                 flex_grow: 1.0,
                 padding: UiRect::all(Val::Px(4.0)),
                 align_items: AlignItems::FlexStart,
+                flex_direction: FlexDirection::Column,
                 ..Default::default()
             },
             ..Default::default()
@@ -306,6 +312,7 @@ pub fn spawn_panel(
             image: UiImage(assets.image_ui_smallbutt_depressed.clone()),
             ..Default::default()
         },
+        SimpleButtVisual,
         TooltipText {
             title: "Minify".into(),
             text: "The Panel will collapse into a button at the bottom of the screen.\nAlternatively, you can double-click the title to collapse into the titlebar.".into(),
@@ -318,8 +325,34 @@ pub fn spawn_panel(
             ..Default::default()
         },
     )).id();
+    let close_butt = commands.spawn((
+        ButtonBundle {
+            style: Style {
+                align_items: AlignItems::Center,
+                align_content: AlignContent::Center,
+                justify_content: JustifyContent::Center,
+                size: Size::new(Val::Px(16.0), Val::Px(16.0)),
+                ..Default::default()
+            },
+            image: UiImage(assets.image_ui_smallbutt_depressed.clone()),
+            ..Default::default()
+        },
+        SimpleButtVisual,
+        TooltipText {
+            title: "Close".into(),
+            text: "The Panel will disappear.".into(),
+        },
+    )).id();
+    let close_icon = commands.spawn((
+        ImageBundle {
+            focus_policy: FocusPolicy::Pass,
+            image: UiImage(assets.image_icon_wm_close.clone()),
+            ..Default::default()
+        },
+    )).id();
+    commands.entity(close_butt).push_children(&[close_icon]);
     commands.entity(mini_butt).push_children(&[mini_icon]);
-    commands.entity(titlebar).push_children(&[mini_butt, title]);
+    commands.entity(titlebar).push_children(&[mini_butt, title, close_butt]);
     commands.entity(container).push_children(&[titlebar, contents]);
 
     contents

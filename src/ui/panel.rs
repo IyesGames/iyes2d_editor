@@ -12,12 +12,25 @@ pub struct PanelPlugin<S: StateData> {
 impl<S: StateData> Plugin for PanelPlugin<S> {
     fn build(&self, app: &mut App) {
         app.add_enter_system(self.state.clone(), setup_panel_layer);
+        app.add_enter_system(self.state.clone(), setup_minibar);
         app.add_enter_system(self.state.clone(), spawn_panels);
         app.add_exit_system(self.state.clone(), remove_resource::<PanelLayerEntity>);
         app.add_system_to_stage(CoreStage::PostUpdate, reparent_panels.run_in_state(self.state.clone()));
         app.add_system(panel_focus.run_in_state(self.state.clone()));
         app.add_system(panel_titlebar_drag.run_in_state(self.state.clone()));
         app.add_system(panel_titlebar_collapse.run_in_state(self.state.clone()));
+        app.add_system(
+            butt_handler(minibar_butt_handler)
+                .run_in_state(self.state.clone())
+        );
+        app.add_system(
+            butt_handler(mini_butt_handler)
+                .run_in_state(self.state.clone())
+        );
+        app.add_system(
+            butt_handler(close_butt_handler)
+                .run_in_state(self.state.clone())
+        );
     }
 }
 
@@ -212,7 +225,7 @@ fn panel_titlebar_drag(
 pub fn spawn_panel(
     commands: &mut Commands,
     assets: &EditorAssets,
-    title: &str,
+    title_str: &str,
 ) -> Entity {
     let container = commands.spawn(()).id();
     let titlebar = commands.spawn(()).id();
@@ -292,7 +305,7 @@ pub fn spawn_panel(
                 },
                 ..Default::default()
             },
-            text: Text::from_section(title, TextStyle {
+            text: Text::from_section(title_str, TextStyle {
                 font: assets.font_bold.clone(),
                 font_size: 16.0,
                 color: Color::WHITE,
@@ -311,6 +324,10 @@ pub fn spawn_panel(
             },
             image: UiImage(assets.image_ui_smallbutt_depressed.clone()),
             ..Default::default()
+        },
+        MiniButt {
+            panel: container,
+            title: title_str.into(),
         },
         SimpleButtVisual,
         TooltipText {
@@ -337,6 +354,9 @@ pub fn spawn_panel(
             image: UiImage(assets.image_ui_smallbutt_depressed.clone()),
             ..Default::default()
         },
+        CloseButt {
+            panel: container,
+        },
         SimpleButtVisual,
         TooltipText {
             title: "Close".into(),
@@ -358,3 +378,133 @@ pub fn spawn_panel(
     contents
 }
 
+#[derive(Component)]
+struct MinibarTop;
+
+#[derive(Component, Clone)]
+struct MinibarButt {
+    panel: Entity,
+}
+
+#[derive(Component, Clone)]
+struct MiniButt {
+    panel: Entity,
+    title: String,
+}
+
+#[derive(Component, Clone)]
+struct CloseButt {
+    panel: Entity,
+}
+
+fn setup_minibar(
+    mut commands: Commands,
+    assets: Res<EditorAssets>,
+) {
+    let minibar = commands.spawn((
+        NodeBundle {
+            focus_policy: FocusPolicy::Pass,
+            z_index: ZIndex::Global(9010), // TODO: make this configurable
+            style: Style {
+                position_type: PositionType::Absolute,
+                position: UiRect {
+                    bottom: Val::Px(0.0),
+                    left: Val::Px(0.0),
+                    top: Val::Auto,
+                    right: Val::Auto,
+                },
+                flex_direction: FlexDirection::Row,
+                align_items: AlignItems::FlexStart,
+                align_content: AlignContent::FlexStart,
+                justify_content: JustifyContent::FlexStart,
+                flex_wrap: FlexWrap::Wrap,
+                ..Default::default()
+            },
+            background_color: BackgroundColor(Color::rgb(0.75, 0.75, 0.75)),
+            ..Default::default()
+        },
+        MinibarTop,
+        EditorCleanup,
+    )).id();
+}
+
+fn mini_butt_handler(
+    In(butt): In<MiniButt>,
+    mut commands: Commands,
+    assets: Res<EditorAssets>,
+    mut q_panel: Query<&mut Visibility, With<PanelEntity>>,
+    q_minibar: Query<Entity, With<MinibarTop>>,
+) {
+    // hide the panel (by visibility, keep flex layout)
+    q_panel.get_mut(butt.panel).unwrap().is_visible = false;
+    // create a minibar button for restoring it
+    for e_minibar in &q_minibar {
+        let button = commands.spawn((
+            ButtonBundle {
+                style: Style {
+                    align_items: AlignItems::Center,
+                    align_content: AlignContent::Center,
+                    justify_content: JustifyContent::Center,
+                    size: Size::new(Val::Px(64.0), Val::Px(64.0)),
+                    ..Default::default()
+                },
+                image: UiImage(assets.image_ui_toolbar_depressed.clone()),
+                ..Default::default()
+            },
+            MinibarButt {
+                panel: butt.panel,
+            },
+            SimpleButtVisual,
+            TooltipText {
+                title: butt.title.clone(),
+                text: "Click to re-open the Panel.".into(),
+            },
+        )).id();
+        // construct the string using initials from the title
+        let mut minitext_str = String::new();
+        minitext_str.push('[');
+        for word in butt.title.split_whitespace() {
+            if !word.is_empty() {
+                for c in word.chars().next().unwrap().to_uppercase() {
+                    minitext_str.push(c);
+                }
+            }
+        }
+        minitext_str.push(']');
+        let minitext = commands.spawn((
+            TextBundle {
+                text: Text::from_section(minitext_str, TextStyle {
+                    font: assets.font_bold.clone(),
+                    font_size: 16.0,
+                    color: Color::BLACK,
+                }),
+                ..Default::default()
+            },
+        )).id();
+        commands.entity(button).push_children(&[minitext]);
+        commands.entity(e_minibar).push_children(&[button]);
+    }
+}
+
+fn minibar_butt_handler(
+    In(butt): In<MinibarButt>,
+    mut commands: Commands,
+    mut q_panel: Query<&mut Visibility, With<PanelEntity>>,
+    q_minibar: Query<(Entity, &MinibarButt)>,
+) {
+    // despawn any minibar buttons
+    for (e, minibutt) in &q_minibar {
+        if minibutt.panel == butt.panel {
+            commands.entity(e).despawn_recursive();
+        }
+    }
+    // unhide the panel
+    q_panel.get_mut(butt.panel).unwrap().is_visible = true;
+}
+
+fn close_butt_handler(
+    In(butt): In<CloseButt>,
+    mut commands: Commands,
+) {
+    commands.entity(butt.panel).despawn_recursive();
+}

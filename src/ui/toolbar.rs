@@ -1,5 +1,4 @@
 use crate::crate_prelude::*;
-use crate::ui::tooltip::TooltipText;
 
 pub(crate) struct ToolbarPlugin<S: StateData> {
     pub state: S,
@@ -43,12 +42,6 @@ fn setup_toolbar(
                 align_content: AlignContent::FlexStart,
                 justify_content: JustifyContent::FlexStart,
                 flex_wrap: FlexWrap::Wrap,
-                // padding: UiRect {
-                //     left: Val::Px(0.0),
-                //     top: Val::Px(0.0),
-                //     right: Val::Px(4.0),
-                //     bottom: Val::Px(4.0),
-                // },
                 ..Default::default()
             },
             background_color: BackgroundColor(Color::rgb(0.75, 0.75, 0.75)),

@@ -1,4 +1,7 @@
 ({
+    "logo.small": File (
+        path: "logo.png",
+    ),
     "iyes2d_editor.font.regular": File (
         path: "iyes2d_editor/font/Ubuntu-R.ttf",
     ),
@@ -10,6 +13,9 @@
     ),
     "iyes2d_editor.image.ui.smallbutt.pressed": File (
         path: "iyes2d_editor/image/ui/smallbutt_pressed.png",
+    ),
+    "iyes2d_editor.image.ui.smallbutt.hover": File (
+        path: "iyes2d_editor/image/ui/smallbutt_hover.png",
     ),
     "iyes2d_editor.image.ui.toolbar.depressed": File (
         path: "iyes2d_editor/image/ui/toolbar_depressed.png",
@@ -25,6 +31,9 @@
     ),
     "iyes2d_editor.image.icon.wm.minify": File (
         path: "iyes2d_editor/image/icon/wm/minify.png",
+    ),
+    "iyes2d_editor.image.icon.wm.close": File (
+        path: "iyes2d_editor/image/icon/wm/close.png",
     ),
     "iyes2d_editor.image.icon.tool.selectentities": File (
         path: "iyes2d_editor/image/icon/tool/selectentities.png",

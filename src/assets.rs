@@ -7,10 +7,14 @@ pub struct EditorAssets {
     pub(crate) font: Handle<Font>,
     #[asset(key = "iyes2d_editor.font.bold")]
     pub(crate) font_bold: Handle<Font>,
+    #[asset(key = "logo.small")]
+    pub(crate) logo_small: Handle<Image>,
     #[asset(key = "iyes2d_editor.image.ui.smallbutt.depressed")]
     pub(crate) image_ui_smallbutt_depressed: Handle<Image>,
     #[asset(key = "iyes2d_editor.image.ui.smallbutt.pressed")]
     pub(crate) image_ui_smallbutt_pressed: Handle<Image>,
+    #[asset(key = "iyes2d_editor.image.ui.smallbutt.hover")]
+    pub(crate) image_ui_smallbutt_hover: Handle<Image>,
     #[asset(key = "iyes2d_editor.image.ui.toolbar.depressed")]
     pub(crate) image_ui_toolbar_depressed: Handle<Image>,
     #[asset(key = "iyes2d_editor.image.ui.toolbar.pressed")]
@@ -19,6 +23,8 @@ pub struct EditorAssets {
     pub(crate) image_ui_toolbar_hover: Handle<Image>,
     #[asset(key = "iyes2d_editor.image.ui.toolbar.disabled")]
     pub(crate) image_ui_toolbar_disabled: Handle<Image>,
+    #[asset(key = "iyes2d_editor.image.icon.wm.close")]
+    pub(crate) image_icon_wm_close: Handle<Image>,
     #[asset(key = "iyes2d_editor.image.icon.wm.minify")]
     pub(crate) image_icon_wm_minify: Handle<Image>,
     #[asset(key = "iyes2d_editor.image.icon.tool.selectentities")]
@@ -29,7 +35,36 @@ pub struct EditorAssets {
     pub(crate) image_icon_tool_selecttilemap: Handle<Image>,
 }
 
-pub struct EditorAssetsPlugin<S: StateData> {
+impl EditorAssets {
+    pub(crate) fn butt_change_image(&self, current_image: &Handle<Image>, interaction: Interaction, disabled: bool, selected: bool) -> Result<Handle<Image>, ()> {
+        // depressed, hover, pressed, disabled
+        let images =
+        if current_image == &self.image_ui_smallbutt_depressed ||
+           current_image == &self.image_ui_smallbutt_hover ||
+           current_image == &self.image_ui_smallbutt_pressed
+        {
+            [&self.image_ui_smallbutt_depressed, &self.image_ui_smallbutt_hover, &self.image_ui_smallbutt_pressed, &self.image_ui_smallbutt_depressed]
+        } else if current_image == &self.image_ui_toolbar_depressed ||
+                  current_image == &self.image_ui_toolbar_hover ||
+                  current_image == &self.image_ui_toolbar_pressed
+        {
+            [&self.image_ui_toolbar_depressed, &self.image_ui_toolbar_hover, &self.image_ui_toolbar_pressed, &self.image_ui_toolbar_disabled]
+        } else {
+            return Err(());
+        };
+
+        let handle = match (selected, disabled, interaction) {
+            (true, _, _) => images[2].clone(),
+            (false, true, _) => images[3].clone(),
+            (false, false, Interaction::None) => images[0].clone(),
+            (false, false, Interaction::Hovered) => images[1].clone(),
+            (false, false, Interaction::Clicked) => images[2].clone(),
+        };
+        Ok(handle)
+    }
+}
+
+pub(crate) struct EditorAssetsPlugin<S: StateData> {
     pub asset_load_state: S,
     pub editor_state: S,
 }

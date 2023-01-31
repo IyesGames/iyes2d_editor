@@ -3,6 +3,7 @@ use crate::crate_prelude::*;
 pub(crate) mod toolbar;
 pub(crate) mod tooltip;
 pub(crate) mod panel;
+pub(crate) mod menu;
 
 pub(crate) struct EditorUiPlugin<S: StateData> {
     pub state: S,
@@ -17,6 +18,9 @@ impl<S: StateData> Plugin for EditorUiPlugin<S> {
             state: self.state.clone(),
         });
         app.add_plugin(panel::PanelPlugin {
+            state: self.state.clone(),
+        });
+        app.add_plugin(menu::MenuPlugin {
             state: self.state.clone(),
         });
         app.add_system(simple_butt_visual.run_in_state(self.state.clone()));

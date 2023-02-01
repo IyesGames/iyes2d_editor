@@ -1,7 +1,6 @@
-use bevy::prelude::*;
-use bevy::ecs::schedule::StateData;
+use bevy::input::mouse::{MouseMotion, MouseWheel};
+use crate::crate_prelude::*;
 use bevy::render::camera::RenderTarget;
-use iyes_loopless::prelude::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SystemLabel)]
 pub enum SystemLabels {
@@ -15,10 +14,28 @@ pub(crate) struct CameraPlugin<S: StateData> {
 impl<S: StateData> Plugin for CameraPlugin<S> {
     fn build(&self, app: &mut App) {
         app.init_resource::<WorldCursor>();
+        app.add_enter_system(self.state.clone(), ensure_setup_editor_camera);
+        app.add_enter_system(self.state.clone(), showhide_other_cameras::<false>);
+        app.add_exit_system(self.state.clone(), showhide_other_cameras::<true>);
         app.add_system(
             world_cursor
                 .run_in_state(self.state.clone())
                 .label(SystemLabels::WorldCursor)
+        );
+        app.add_system(
+            camera_pan
+                .run_in_state(self.state.clone())
+                .after(SystemLabels::WorldCursor)
+        );
+        app.add_system(
+            camera_rotate
+                .run_in_state(self.state.clone())
+                .after(SystemLabels::WorldCursor)
+        );
+        app.add_system(
+            camera_zoom
+                .run_in_state(self.state.clone())
+                .after(SystemLabels::WorldCursor)
         );
     }
 }
@@ -29,6 +46,108 @@ pub struct EditorCamera;
 #[derive(Resource, Default)]
 pub(crate) struct WorldCursor {
     pub pos: Vec2,
+}
+
+fn showhide_other_cameras<const VIS: bool>(
+    mut q_camera: Query<&mut Visibility, (With<Camera>, Without<EditorCamera>)>,
+) {
+    for mut vis in &mut q_camera {
+        vis.is_visible = VIS;
+    }
+}
+
+fn ensure_setup_editor_camera(
+    mut commands: Commands,
+    // To check if one already exists
+    q_camera_check: Query<Entity, (With<Camera>, With<EditorCamera>, With<Camera2d>)>,
+) {
+    use bevy::ecs::query::QuerySingleError;
+    let e_camera = match q_camera_check.get_single() {
+        Ok(e) => e,
+        Err(QuerySingleError::MultipleEntities(_)) => {
+            // get the first and despawn the others
+            let mut iter = q_camera_check.iter();
+            let e = iter.next().unwrap();
+            for e in iter {
+                commands.entity(e).despawn();
+            }
+            e
+        }
+        Err(QuerySingleError::NoEntities(_)) => {
+            // spawn one
+            commands.spawn((
+                Camera2dBundle::default(),
+                EditorCamera,
+            )).id()
+        }
+    };
+    // TODO: enforce things we care about on the camera, here
+}
+
+fn camera_pan(
+    mousebutt: Res<Input<MouseButton>>,
+    crs: Res<WorldCursor>,
+    mut q_camera: Query<&mut Transform, With<EditorCamera>>,
+    mut startpos: Local<Vec2>,
+) {
+    // TODO: transition to a proper input mgmt framework like LWIM
+    if mousebutt.just_pressed(MouseButton::Right) {
+        *startpos = crs.pos;
+    }
+    if mousebutt.pressed(MouseButton::Right) {
+        // pan based on WorldCursor, so camera follows on-screen nicely
+        // this system must run *after* world cursor, or they will race
+        // (mathematically, next frame the world cursor should be in the same place)
+        let delta = crs.pos - *startpos;
+        let mut xf_cam = q_camera.single_mut();
+        xf_cam.translation.x -= delta.x;
+        xf_cam.translation.y -= delta.y;
+    }
+}
+
+fn camera_rotate(
+    mousebutt: Res<Input<MouseButton>>,
+    mut motion: EventReader<MouseMotion>,
+    mut q_camera: Query<&mut Transform, With<EditorCamera>>,
+) {
+    // TODO: transition to a proper input mgmt framework like LWIM
+    if mousebutt.pressed(MouseButton::Middle) {
+        let delta: f32 = motion.iter().map(|ev| ev.delta.x).sum();
+        if delta != 0.0 {
+            let mut xf_cam = q_camera.single_mut();
+            xf_cam.rotate_z(delta / 256.0);
+        }
+    }
+}
+
+fn camera_zoom(
+    mut motion: EventReader<MouseWheel>,
+    mut last_zoom: Local<Option<Instant>>,
+    mut q_camera: Query<&mut Transform, With<EditorCamera>>,
+) {
+    // TODO: this feels awful but will do for now
+    // just throttle how often we can zoom
+    if let Some(last) = &*last_zoom {
+        if Instant::now() - *last < Duration::from_millis(125) {
+            motion.clear();
+            return;
+        }
+    }
+
+    // TODO: transition to a proper input mgmt framework like LWIM
+    let delta: f32 = motion.iter().map(|ev| ev.y).sum();
+    if delta != 0.0 {
+        let mut xf_cam = q_camera.single_mut();
+        // let mul = delta.exp();
+        let mul = if delta < 0.0 {
+            0.5
+        } else {
+            2.0
+        };
+        xf_cam.scale.x *= mul;
+        xf_cam.scale.y *= mul;
+        *last_zoom = Some(Instant::now());
+    }
 }
 
 fn world_cursor(

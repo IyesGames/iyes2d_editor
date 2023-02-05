@@ -1,12 +1,18 @@
 use crate::crate_prelude::*;
 
+// Optional modules
 #[cfg(feature = "bevy_ecs_tilemap")]
 pub mod tilemap;
 
+// Non-optional modules
+pub mod sprite;
+
+// General editor framework modules
 pub mod camera;
 pub mod tool;
 pub mod selection;
 
+// Internal support modules
 mod assets;
 mod ui;
 mod misc;
@@ -102,6 +108,9 @@ impl<S: StateData> Plugin for EditorPlugin<S> {
             state: self.editor_state.clone()
         });
         app.add_plugin(crate::ui::EditorUiPlugin {
+            state: self.editor_state.clone()
+        });
+        app.add_plugin(crate::sprite::SpriteEditorPlugin {
             state: self.editor_state.clone()
         });
         #[cfg(feature = "bevy_ecs_tilemap")]

@@ -94,8 +94,9 @@ impl From<Tool> for Tools {
 pub trait RunConditionToolsExt: ConditionHelpers {
     fn run_for_tools(
         self,
-        tools: Tools,
+        tools: impl Into<Tools>,
     ) -> Self {
+        let tools = tools.into();
         self.run_if(move |state: Res<CurrentState<Tool>>| {
             tools.contains(state.0)
         })

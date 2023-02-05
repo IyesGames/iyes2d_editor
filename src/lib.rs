@@ -5,6 +5,7 @@ pub mod tilemap;
 
 pub mod camera;
 pub mod tool;
+pub mod selection;
 
 mod assets;
 mod ui;
@@ -95,6 +96,9 @@ impl<S: StateData> Plugin for EditorPlugin<S> {
             editor_state: self.editor_state.clone(),
         });
         app.add_plugin(crate::camera::CameraPlugin {
+            state: self.editor_state.clone()
+        });
+        app.add_plugin(crate::selection::SelectionPlugin {
             state: self.editor_state.clone()
         });
         app.add_plugin(crate::ui::EditorUiPlugin {

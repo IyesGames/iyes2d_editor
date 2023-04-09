@@ -1,19 +1,20 @@
 use crate::crate_prelude::*;
 
-pub(crate) struct ToolbarPlugin<S: StateData> {
+pub(crate) struct ToolbarPlugin<S: States> {
     pub state: S,
 }
 
-impl<S: StateData> Plugin for ToolbarPlugin<S> {
+impl<S: States> Plugin for ToolbarPlugin<S> {
     fn build(&self, app: &mut App) {
-        app.add_enter_system(self.state.clone(), setup_toolbar);
-        app.add_system(
-            toolbar_button_image
-                .run_in_state(self.state.clone())
+        app.add_systems(
+            (
+                setup_toolbar,
+            ).in_schedule(OnEnter(self.state.clone()))
         );
-        app.add_system(
-            butt_handler(toolbar_button_handler)
-                .run_in_state(self.state.clone())
+        app.add_systems(
+            (
+                toolbar_button_image,
+            ).in_set(EditorSet)
         );
     }
 }
@@ -60,7 +61,7 @@ fn setup_toolbar(
                     size: Size::new(Val::Px(64.0), Val::Px(64.0)),
                     ..Default::default()
                 },
-                image: UiImage(assets.image_ui_toolbar_depressed.clone()),
+                image: UiImage::new(assets.image_ui_toolbar_depressed.clone()),
                 ..Default::default()
             },
         )).id();
@@ -71,7 +72,7 @@ fn setup_toolbar(
                     ..Default::default()
                 },
                 focus_policy: FocusPolicy::Pass,
-                image: UiImage(assets.logo_small.clone()),
+                image: UiImage::new(assets.logo_small.clone()),
                 ..Default::default()
             },
         )).id();
@@ -89,16 +90,17 @@ fn setup_toolbar(
                     size: Size::new(Val::Px(64.0), Val::Px(64.0)),
                     ..Default::default()
                 },
-                image: UiImage(assets.image_ui_toolbar_depressed.clone()),
+                image: UiImage::new(assets.image_ui_toolbar_depressed.clone()),
                 ..Default::default()
             },
             ToolbarTool(tool),
+            ClickBehavior::new().entity_system(toolbar_butt_handler),
             tool.tooltip(),
         )).id();
         let icon = commands.spawn((
             ImageBundle {
                 focus_policy: FocusPolicy::Pass,
-                image: UiImage(tool.icon(&*assets)),
+                image: UiImage::new(tool.icon(&*assets)),
                 ..Default::default()
             },
         )).id();
@@ -108,21 +110,24 @@ fn setup_toolbar(
 }
 
 fn toolbar_button_image(
-    tool: Res<CurrentState<Tool>>,
+    tool: Res<State<Tool>>,
     assets: Res<EditorAssets>,
-    mut query_buttons: Query<(&Interaction, &ToolbarTool, &mut UiImage, Option<&UiInactive>), With<Button>>,
+    mut query_buttons: Query<(&Interaction, &ToolbarTool, &mut UiImage, Option<&UiDisabled>), With<Button>>,
 ) {
     // PERF: this could use change detection run conditions
     for (interaction, toolbar_tool, mut current_image, inactive) in &mut query_buttons {
-        if let Ok(handle) = assets.butt_change_image(&current_image.0, *interaction, inactive.is_some(), tool.0 == toolbar_tool.0) {
-            current_image.0 = handle;
+        if let Ok(handle) = assets.butt_change_image(&current_image.texture, *interaction, inactive.is_some(), tool.0 == toolbar_tool.0) {
+            current_image.texture = handle;
         }
     }
 }
 
-fn toolbar_button_handler(
-    In(tool): In<ToolbarTool>,
-    mut commands: Commands,
+fn toolbar_butt_handler(
+    In(entity): In<Entity>,
+    q_tool: Query<&ToolbarTool>,
+    mut next_state: ResMut<NextState<Tool>>,
 ) {
-    commands.insert_resource(NextState(tool.0));
+    if let Ok(tool) = q_tool.get(entity) {
+        next_state.set(tool.0);
+    }
 }

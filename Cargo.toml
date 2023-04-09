@@ -6,9 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-iyes_loopless = "0.9"
-iyes_scene_tools = "0.2"
-iyes_bevy_util = { git = "https://github.com/IyesGames/iyes_bevy_util" }
+iyes_scene_tools = { git = "https://github.com/IyesGames/iyes_scene_tools" }
+iyes_bevy_extras = { git = "https://github.com/IyesGames/iyes_bevy_extras" }
 iyes2d_autotilemap = { git = "https://github.com/IyesGames/iyes2d_autotilemap" }
 iyes_blueprints = { git = "https://github.com/IyesGames/iyes_blueprints" }
 rand = "0.8.5"
@@ -16,7 +15,7 @@ enum-iterator = "1.2.0"
 parking_lot = "0.12.1"
 
 [dependencies.bevy]
-version = "0.9.1"
+version = "0.10"
 default-features = false
 features = [
     "bevy_asset",
@@ -29,15 +28,15 @@ features = [
 ]
 
 [dependencies.bevy_ecs_tilemap]
-version = "0.9"
+version = "0.10"
 optional = true
 
 [dependencies.bevy_asset_loader]
-version = "0.14"
-features = ["stageless", "standard_dynamic_assets"]
+version = "0.15"
+features = ["standard_dynamic_assets"]
 
 [dev-dependencies.bevy]
-version = "0.9.1"
+version = "0.10"
 default-features = false
 features = [
     "bevy_asset",
@@ -54,7 +53,10 @@ features = [
 ]
 
 [dev-dependencies.bevy_ecs_tilemap]
-version = "0.9"
+version = "0.10"
+
+[patch."https://github.com/IyesGames/iyes_bevy_extras"]
+iyes_bevy_extras = { path = "../iyes_bevy_extras/" }
 
 [patch."https://github.com/IyesGames/iyes_blueprints"]
 iyes_blueprints = { path = "../iyes_blueprints/" }

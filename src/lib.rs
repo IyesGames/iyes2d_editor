@@ -27,12 +27,13 @@ mod crate_prelude {
     pub use bevy::prelude::*;
     pub use bevy::ui::FocusPolicy;
     pub use bevy::utils::{HashMap, HashSet, Duration, Instant};
-    pub use bevy::ecs::schedule::StateData;
-    pub use iyes_loopless::prelude::*;
-    pub use iyes_bevy_util::prelude::*;
+    pub use bevy::ecs::schedule::States;
+    pub use iyes_bevy_extras::prelude::*;
     pub use crate::tool::*;
     pub use crate::assets::EditorAssets;
     pub use crate::EditorCleanup;
+    pub use crate::EditorSet;
+    pub(crate) use crate::EditorFlush;
 }
 
 /// All entities with this component will be despawned recursively when exiting the editor state
@@ -41,12 +42,6 @@ mod crate_prelude {
 /// this component for easy clean-up.
 #[derive(Component)]
 pub struct EditorCleanup;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SystemLabel)]
-pub enum SystemLabels {
-    WorldCursor,
-    TilemapSelect,
-}
 
 /// Add this to your App to integrate the Iyes2D Editor!
 ///
@@ -89,14 +84,32 @@ pub enum SystemLabels {
 /// 3. Add this plugin to your App, specifying the states you created.
 /// 4. Add some system to your app, that transitions into the editor loading
 ///    state, whenever you want to enter the editor.
-pub struct EditorPlugin<S: StateData> {
+pub struct EditorPlugin<S: States> {
     pub asset_load_state: S,
     pub editor_state: S,
 }
 
-impl<S: StateData> Plugin for EditorPlugin<S> {
+#[derive(SystemSet, Debug, PartialEq, Eq, Clone, Copy, Hash, Default)]
+pub struct EditorSet;
+
+#[derive(SystemSet, Debug, PartialEq, Eq, Clone, Copy, Hash, Default)]
+pub(crate) struct EditorFlush;
+
+impl<S: States> Plugin for EditorPlugin<S> {
     fn build(&self, app: &mut App) {
-        app.add_loopless_state(crate::tool::Tool::default());
+        app.configure_set(
+            EditorSet
+                .run_if(in_state(self.editor_state.clone()))
+        );
+        app.configure_set(
+            EditorFlush
+                .in_set(EditorSet)
+        );
+        app.add_system(
+            apply_system_buffers
+                .in_set(EditorFlush)
+        );
+        app.add_state::<crate::tool::Tool>();
         app.add_plugin(crate::assets::EditorAssetsPlugin {
             asset_load_state: self.asset_load_state.clone(),
             editor_state: self.editor_state.clone(),
@@ -117,6 +130,9 @@ impl<S: StateData> Plugin for EditorPlugin<S> {
         app.add_plugin(crate::tilemap::TilemapEditorPlugin {
             state: self.editor_state.clone()
         });
-        app.add_exit_system(self.editor_state.clone(), despawn_with_recursive::<EditorCleanup>);
+        app.add_system(
+            despawn_all_recursive::<With<EditorCleanup>>
+                .in_schedule(OnExit(self.editor_state.clone()))
+        );
     }
 }

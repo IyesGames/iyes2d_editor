@@ -5,12 +5,13 @@ pub(crate) mod tooltip;
 pub(crate) mod panel;
 pub(crate) mod menu;
 
-pub(crate) struct EditorUiPlugin<S: StateData> {
+pub(crate) struct EditorUiPlugin<S: States> {
     pub state: S,
 }
 
-impl<S: StateData> Plugin for EditorUiPlugin<S> {
+impl<S: States> Plugin for EditorUiPlugin<S> {
     fn build(&self, app: &mut App) {
+        app.add_plugin(iyes_bevy_extras::ui::UiExtrasPlugin);
         app.add_plugin(toolbar::ToolbarPlugin {
             state: self.state.clone(),
         });
@@ -23,7 +24,7 @@ impl<S: StateData> Plugin for EditorUiPlugin<S> {
         app.add_plugin(menu::MenuPlugin {
             state: self.state.clone(),
         });
-        app.add_system(simple_butt_visual.run_in_state(self.state.clone()));
+        app.add_system(simple_butt_visual.in_set(EditorSet));
     }
 }
 
@@ -32,11 +33,14 @@ struct SimpleButtVisual;
 
 fn simple_butt_visual(
     assets: Res<EditorAssets>,
-    mut q_butt: Query<(&Interaction, &mut UiImage, Option<&UiInactive>), (With<Button>, With<SimpleButtVisual>, Changed<Interaction>)>,
+    mut q_butt: Query<
+        (&Interaction, &mut UiImage, Option<&UiDisabled>),
+        (With<Button>, With<SimpleButtVisual>, Changed<Interaction>)
+    >,
 ) {
     for (interaction, mut current_image, disabled) in &mut q_butt {
-        if let Ok(handle) = assets.butt_change_image(&current_image.0, *interaction, disabled.is_some(), false) {
-            current_image.0 = handle;
+        if let Ok(handle) = assets.butt_change_image(&current_image.texture, *interaction, disabled.is_some(), false) {
+            current_image.texture = handle;
         }
     }
 }

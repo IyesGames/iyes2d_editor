@@ -3,7 +3,7 @@ use crate::assets::EditorAssets;
 use crate::ui::tooltip::TooltipText;
 use std::ops::{BitOr, BitOrAssign};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, States)]
 #[derive(Reflect, FromReflect)]
 #[derive(enum_iterator::Sequence)]
 #[repr(u8)]
@@ -91,16 +91,11 @@ impl From<Tool> for Tools {
     }
 }
 
-pub trait RunConditionToolsExt: ConditionHelpers {
-    fn run_for_tools(
-        self,
-        tools: impl Into<Tools>,
-    ) -> Self {
-        let tools = tools.into();
-        self.run_if(move |state: Res<CurrentState<Tool>>| {
-            tools.contains(state.0)
-        })
+pub fn with_tools(
+    tools: impl Into<Tools>,
+) -> impl Fn(Res<State<Tool>>) -> bool {
+    let tools = tools.into();
+    move |state: Res<State<Tool>>| {
+        tools.contains(state.0)
     }
 }
-
-impl<T: ConditionHelpers> RunConditionToolsExt for T {}

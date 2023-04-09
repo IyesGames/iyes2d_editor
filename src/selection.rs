@@ -11,32 +11,37 @@
 //! are tracking. These entities also carry the components for visualizing the
 //! selection.
 
-use bevy::{sprite::Anchor, transform::TransformSystem};
+use bevy::{sprite::Anchor, transform::TransformSystem, input::common_conditions::input_just_pressed};
 
 use crate::{crate_prelude::*, camera::WorldCursor};
 
-pub(crate) struct SelectionPlugin<S: StateData> {
+pub(crate) struct SelectionPlugin<S: States> {
     pub state: S,
 }
 
-impl<S: StateData> Plugin for SelectionPlugin<S> {
+impl<S: States> Plugin for SelectionPlugin<S> {
     fn build(&self, app: &mut App) {
-        app.add_exit_system(self.state.clone(), remove_from_all::<Selected>);
-        app.add_system_to_stage(
-            CoreStage::PostUpdate,
-            update_selection_visual_sprite
-                .run_in_state(self.state.clone())
+        app.add_systems(
+            (
+                remove_from_all::<Selected, With<Selected>>,
+            ).in_schedule(OnExit(self.state.clone()))
         );
-        app.add_system_to_stage(
-            CoreStage::PostUpdate,
+        app.add_systems(
+            (
+                update_selection_visual_sprite,
+            ).in_set(EditorSet).after(EditorFlush)
+        );
+        app.add_system(
             selection_follow_entity_transform
-                .run_in_state(self.state.clone())
+                .in_base_set(CoreSet::PostUpdate)
+                .in_set(EditorSet)
                 .after(TransformSystem::TransformPropagate)
         );
         app.add_system(
             deselect_selections_on_click
-                .run_in_state(self.state.clone())
-                .run_for_tools(Tool::SelectEntities)
+                .in_set(EditorSet)
+                .run_if(with_tools(Tool::SelectEntities))
+                .run_if(input_just_pressed(MouseButton::Left))
         );
     }
 }
@@ -142,15 +147,15 @@ fn deselect_selections_on_click(
     crs: Res<WorldCursor>,
     q_selection: Query<(Entity, &Selection, &GlobalTransform, &SelectionVisualBounds)>,
 ) {
-    if btn.just_pressed(MouseButton::Left) {
-        for (e, sel, xf, bounds) in &q_selection {
-            let crs_local = xf.compute_matrix().inverse() * crs.pos.extend(0.0).extend(1.0);
-            if crs_local.x >= bounds.rect.min.x && crs_local.y >= bounds.rect.min.y &&
-               crs_local.x <= bounds.rect.max.x && crs_local.y <= bounds.rect.max.y
-            {
-                commands.entity(sel.target).remove::<Selected>();
-                commands.entity(e).despawn_recursive();
-            }
+    // NOTE: assumes .run_if(input_just_pressed(MouseButton::Left))
+
+    for (e, sel, xf, bounds) in &q_selection {
+        let crs_local = xf.compute_matrix().inverse() * crs.pos.extend(0.0).extend(1.0);
+        if crs_local.x >= bounds.rect.min.x && crs_local.y >= bounds.rect.min.y &&
+           crs_local.x <= bounds.rect.max.x && crs_local.y <= bounds.rect.max.y
+        {
+            commands.entity(sel.target).remove::<Selected>();
+            commands.entity(e).despawn_recursive();
         }
     }
 }

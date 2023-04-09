@@ -5,29 +5,36 @@ use bevy::ecs::system::BoxedSystem;
 
 use crate::crate_prelude::*;
 
-pub struct MenuPlugin<S: StateData> {
+pub struct MenuPlugin<S: States> {
     pub state: S,
 }
 
-impl<S: StateData> Plugin for MenuPlugin<S> {
+impl<S: States> Plugin for MenuPlugin<S> {
     fn build(&self, app: &mut App) {
-        app.add_enter_system(self.state.clone(), setup_global_menu);
-        app.add_exit_system(self.state.clone(), remove_resource::<GlobalMenuContainer>);
-        app.add_system(initialize_menu_actions.label("initialize_menu_actions"));
+        app.add_systems(
+            (
+                setup_global_menu,
+            ).in_schedule(OnEnter(self.state.clone()))
+        );
+        app.add_systems(
+            (
+                remove_resource::<GlobalMenuContainer>,
+            ).in_schedule(OnExit(self.state.clone()))
+        );
+        app.add_system(initialize_menu_actions);
         app.add_system(
             close_submenus
-                .run_in_state(self.state.clone())
-                .label("close_submenus")
+                .in_set(EditorSet)
         );
         app.add_system(
             menu_action_handler
-                .run_in_state(self.state.clone())
-                .after("initialize_menu_actions")
+                .in_set(EditorSet)
+                .after(initialize_menu_actions)
         );
         app.add_system(
             menu_submenu_handler
-                .run_in_state(self.state.clone())
-                .after("close_submenus")
+                .in_set(EditorSet)
+                .after(close_submenus)
         );
     }
 }
@@ -127,14 +134,14 @@ fn menu_submenu_handler(
 
         // hide all submenus
         for (_, mut visibility, _) in &mut q_submenu {
-            visibility.is_visible = false;
+            *visibility = Visibility::Hidden;
         }
 
         // show the chain of submenus we are a part of;
         // start from our submenu we want to open and walk up the tree
         let mut e_menu = submenu.0;
         while let Ok((_, mut visibility, container)) = q_submenu.get_mut(e_menu) {
-            visibility.is_visible = true;
+            *visibility = Visibility::Visible;
             e_menu = container.parent_menu;
         }
 
@@ -149,7 +156,7 @@ fn close_submenus(
 ) {
     if btn.just_pressed(MouseButton::Left) {
         for mut visibility in &mut q_submenu {
-            visibility.is_visible = false;
+            *visibility = Visibility::Hidden;
         }
     }
 }
@@ -176,7 +183,7 @@ fn setup_global_menu(
         left: Val::Px(0.0),
         right: Val::Auto,
         bottom: Val::Auto,
-    }, true);
+    }, Visibility::Visible);
     let (_, app_submenu) = spawn_menuitem_submenu(&mut commands, &*assets, menu, "Iyes2D Editor");
     let (_, submenu2) = spawn_menuitem_submenu(&mut commands, &*assets, menu, "Menu 2");
     let (_, submenu3) = spawn_menuitem_submenu(&mut commands, &*assets, app_submenu, "Menu 3");
@@ -190,7 +197,7 @@ pub fn spawn_menu(
     commands: &mut Commands,
     assets: &EditorAssets,
     position: UiRect,
-    is_visible: bool,
+    visibility: Visibility,
 ) -> Entity {
     let menu = commands.spawn((
         NodeBundle {
@@ -205,9 +212,7 @@ pub fn spawn_menu(
                 padding: UiRect::all(Val::Px(1.0)),
                 ..Default::default()
             },
-            visibility: Visibility {
-                is_visible,
-            },
+            visibility,
             ..Default::default()
         },
         MenuContainer,
@@ -225,7 +230,7 @@ pub fn spawn_menuitem_submenu(
     parent_menu: Entity,
     text_str: &str,
 ) -> (Entity, Entity) {
-    let submenu = spawn_menu(commands, assets, UiRect::all(Val::Auto), false);
+    let submenu = spawn_menu(commands, assets, UiRect::all(Val::Auto), Visibility::Hidden);
     let item = spawn_menuitem_helper(commands, assets, parent_menu, true, text_str);
     commands.entity(item).insert(MenuSubmenu(submenu));
     commands.entity(submenu).insert(SubmenuContainer { parent_menu });

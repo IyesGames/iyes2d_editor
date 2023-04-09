@@ -1,41 +1,48 @@
-use bevy::input::mouse::{MouseMotion, MouseWheel};
+use bevy::{input::mouse::{MouseMotion, MouseWheel}, window::PrimaryWindow};
 use crate::crate_prelude::*;
-use bevy::render::camera::RenderTarget;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SystemLabel)]
-pub enum SystemLabels {
-    WorldCursor,
-}
+#[derive(SystemSet, Debug, PartialEq, Eq, Clone, Copy, Hash, Default)]
+pub struct CameraSet;
 
-pub(crate) struct CameraPlugin<S: StateData> {
+#[derive(SystemSet, Debug, PartialEq, Eq, Clone, Copy, Hash, Default)]
+pub struct CameraControlSet;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SystemSet)]
+pub struct WorldCursorSet;
+
+pub(crate) struct CameraPlugin<S: States> {
     pub state: S,
 }
 
-impl<S: StateData> Plugin for CameraPlugin<S> {
+impl<S: States> Plugin for CameraPlugin<S> {
     fn build(&self, app: &mut App) {
         app.init_resource::<WorldCursor>();
-        app.add_enter_system(self.state.clone(), ensure_setup_editor_camera);
-        app.add_enter_system(self.state.clone(), showhide_other_cameras::<false>);
-        app.add_exit_system(self.state.clone(), showhide_other_cameras::<true>);
+        app.add_systems(
+            (
+                ensure_setup_editor_camera,
+                showhide_other_cameras::<false>,
+            ).in_schedule(OnEnter(self.state.clone()))
+        );
+        app.add_systems(
+            (
+                showhide_other_cameras::<true>,
+            ).in_schedule(OnExit(self.state.clone()))
+        );
+        app.configure_set(CameraControlSet.after(WorldCursorSet));
         app.add_system(
             world_cursor
-                .run_in_state(self.state.clone())
-                .label(SystemLabels::WorldCursor)
+                .in_set(WorldCursorSet)
+                .in_set(CameraSet)
+                .in_set(EditorSet)
         );
-        app.add_system(
-            camera_pan
-                .run_in_state(self.state.clone())
-                .after(SystemLabels::WorldCursor)
-        );
-        app.add_system(
-            camera_rotate
-                .run_in_state(self.state.clone())
-                .after(SystemLabels::WorldCursor)
-        );
-        app.add_system(
-            camera_zoom
-                .run_in_state(self.state.clone())
-                .after(SystemLabels::WorldCursor)
+        app.add_systems(
+            (
+                camera_pan,
+                camera_rotate,
+                camera_zoom,
+            ).in_set(CameraSet)
+            .in_set(EditorSet)
+            .in_set(CameraControlSet)
         );
     }
 }
@@ -52,7 +59,11 @@ fn showhide_other_cameras<const VIS: bool>(
     mut q_camera: Query<&mut Visibility, (With<Camera>, Without<EditorCamera>)>,
 ) {
     for mut vis in &mut q_camera {
-        vis.is_visible = VIS;
+        *vis = if VIS {
+            Visibility::Visible
+        } else {
+            Visibility::Hidden
+        };
     }
 }
 
@@ -151,17 +162,17 @@ fn camera_zoom(
 }
 
 fn world_cursor(
-    windows: Res<Windows>,
     mut crs: ResMut<WorldCursor>,
+    q_windows: Query<&Window, With<PrimaryWindow>>,
     q_camera: Query<(&Camera, &GlobalTransform), With<EditorCamera>>,
 ) {
     let (camera, xf_camera) = q_camera.single();
-    let RenderTarget::Window(w_id) = camera.target
-    else {
-        panic!("Editor camera must render to a window!");
-    };
-    let Some(cursor) = windows
-        .get(w_id)
+    // let RenderTarget::Window(w_id) = camera.target
+    // else {
+    //     panic!("Editor camera must render to a window!");
+    // };
+    let Some(cursor) = q_windows
+        .get_single().ok()
         .and_then(|window| window.cursor_position())
         .and_then(|pos| camera.viewport_to_world(xf_camera, pos))
         .map(|ray| ray.origin.truncate())

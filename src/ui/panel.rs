@@ -5,31 +5,31 @@ use crate::ui::tooltip::TooltipText;
 
 use super::SimpleButtVisual;
 
-pub struct PanelPlugin<S: StateData> {
+pub struct PanelPlugin<S: States> {
     pub state: S,
 }
 
-impl<S: StateData> Plugin for PanelPlugin<S> {
+impl<S: States> Plugin for PanelPlugin<S> {
     fn build(&self, app: &mut App) {
-        app.add_enter_system(self.state.clone(), setup_panel_layer);
-        app.add_enter_system(self.state.clone(), setup_minibar);
-        app.add_enter_system(self.state.clone(), spawn_panels);
-        app.add_exit_system(self.state.clone(), remove_resource::<PanelLayerEntity>);
-        app.add_system_to_stage(CoreStage::PostUpdate, reparent_panels.run_in_state(self.state.clone()));
-        app.add_system(panel_focus.run_in_state(self.state.clone()));
-        app.add_system(panel_titlebar_drag.run_in_state(self.state.clone()));
-        app.add_system(panel_titlebar_collapse.run_in_state(self.state.clone()));
-        app.add_system(
-            butt_handler(minibar_butt_handler)
-                .run_in_state(self.state.clone())
+        app.add_systems(
+            (
+                setup_panel_layer,
+                setup_minibar,
+                spawn_panels,
+            ).in_schedule(OnEnter(self.state.clone()))
         );
-        app.add_system(
-            butt_handler(mini_butt_handler)
-                .run_in_state(self.state.clone())
+        app.add_systems(
+            (
+                remove_resource::<PanelLayerEntity>,
+            ).in_schedule(OnExit(self.state.clone()))
         );
-        app.add_system(
-            butt_handler(close_butt_handler)
-                .run_in_state(self.state.clone())
+        app.add_systems(
+            (
+                reparent_panels.after(EditorFlush),
+                panel_focus,
+                panel_titlebar_drag,
+                panel_titlebar_collapse,
+            ).in_set(EditorSet)
         );
     }
 }
@@ -118,7 +118,17 @@ fn spawn_panels(
             ..Default::default()
         },
     )).id();
-    commands.entity(e_contents).push_children(&[label_snap]);
+    let label_us = commands.spawn((
+        TextBundle {
+            text: Text::from_section("Uniform Scaling is currently the preferred mode of operation.", TextStyle {
+                font: assets.font.clone(),
+                font_size: 12.0,
+                color: Color::BLACK,
+            }),
+            ..Default::default()
+        },
+    )).id();
+    commands.entity(e_contents).push_children(&[label_snap, label_us]);
     let e_contents = spawn_panel(&mut commands, &*assets, "About Editor");
     let label_ver = commands.spawn((
         TextBundle {
@@ -322,13 +332,14 @@ pub fn spawn_panel(
                 size: Size::new(Val::Px(16.0), Val::Px(16.0)),
                 ..Default::default()
             },
-            image: UiImage(assets.image_ui_smallbutt_depressed.clone()),
+            image: UiImage::new(assets.image_ui_smallbutt_depressed.clone()),
             ..Default::default()
         },
         MiniButt {
             panel: container,
             title: title_str.into(),
         },
+        ClickBehavior::new().entity_system(mini_butt_handler),
         SimpleButtVisual,
         TooltipText {
             title: "Minify".into(),
@@ -338,7 +349,7 @@ pub fn spawn_panel(
     let mini_icon = commands.spawn((
         ImageBundle {
             focus_policy: FocusPolicy::Pass,
-            image: UiImage(assets.image_icon_wm_minify.clone()),
+            image: UiImage::new(assets.image_icon_wm_minify.clone()),
             ..Default::default()
         },
     )).id();
@@ -351,12 +362,13 @@ pub fn spawn_panel(
                 size: Size::new(Val::Px(16.0), Val::Px(16.0)),
                 ..Default::default()
             },
-            image: UiImage(assets.image_ui_smallbutt_depressed.clone()),
+            image: UiImage::new(assets.image_ui_smallbutt_depressed.clone()),
             ..Default::default()
         },
         CloseButt {
             panel: container,
         },
+        ClickBehavior::new().entity_system(close_butt_handler),
         SimpleButtVisual,
         TooltipText {
             title: "Close".into(),
@@ -366,7 +378,7 @@ pub fn spawn_panel(
     let close_icon = commands.spawn((
         ImageBundle {
             focus_policy: FocusPolicy::Pass,
-            image: UiImage(assets.image_icon_wm_close.clone()),
+            image: UiImage::new(assets.image_icon_wm_close.clone()),
             ..Default::default()
         },
     )).id();
@@ -399,9 +411,9 @@ struct CloseButt {
 
 fn setup_minibar(
     mut commands: Commands,
-    assets: Res<EditorAssets>,
+    _assets: Res<EditorAssets>,
 ) {
-    let minibar = commands.spawn((
+    let _minibar = commands.spawn((
         NodeBundle {
             focus_policy: FocusPolicy::Pass,
             z_index: ZIndex::Global(9010), // TODO: make this configurable
@@ -429,14 +441,16 @@ fn setup_minibar(
 }
 
 fn mini_butt_handler(
-    In(butt): In<MiniButt>,
+    In(entity): In<Entity>,
     mut commands: Commands,
     assets: Res<EditorAssets>,
+    q_butt: Query<&MiniButt>,
     mut q_panel: Query<&mut Visibility, With<PanelEntity>>,
     q_minibar: Query<Entity, With<MinibarTop>>,
 ) {
+    let Ok(butt) = q_butt.get(entity) else { return; };
     // hide the panel (by visibility, keep flex layout)
-    q_panel.get_mut(butt.panel).unwrap().is_visible = false;
+    *q_panel.get_mut(butt.panel).unwrap() = Visibility::Hidden;
     // create a minibar button for restoring it
     for e_minibar in &q_minibar {
         let button = commands.spawn((
@@ -448,12 +462,13 @@ fn mini_butt_handler(
                     size: Size::new(Val::Px(64.0), Val::Px(64.0)),
                     ..Default::default()
                 },
-                image: UiImage(assets.image_ui_toolbar_depressed.clone()),
+                image: UiImage::new(assets.image_ui_toolbar_depressed.clone()),
                 ..Default::default()
             },
             MinibarButt {
                 panel: butt.panel,
             },
+            ClickBehavior::new().entity_system(minibar_butt_handler),
             SimpleButtVisual,
             TooltipText {
                 title: butt.title.clone(),
@@ -487,11 +502,13 @@ fn mini_butt_handler(
 }
 
 fn minibar_butt_handler(
-    In(butt): In<MinibarButt>,
+    In(entity): In<Entity>,
     mut commands: Commands,
+    q_butt: Query<&MinibarButt>,
     mut q_panel: Query<&mut Visibility, With<PanelEntity>>,
     q_minibar: Query<(Entity, &MinibarButt)>,
 ) {
+    let Ok(butt) = q_butt.get(entity) else { return; };
     // despawn any minibar buttons
     for (e, minibutt) in &q_minibar {
         if minibutt.panel == butt.panel {
@@ -499,12 +516,14 @@ fn minibar_butt_handler(
         }
     }
     // unhide the panel
-    q_panel.get_mut(butt.panel).unwrap().is_visible = true;
+    *q_panel.get_mut(butt.panel).unwrap() = Visibility::Visible;
 }
 
 fn close_butt_handler(
-    In(butt): In<CloseButt>,
+    In(entity): In<Entity>,
+    q_butt: Query<&CloseButt>,
     mut commands: Commands,
 ) {
+    let Ok(butt) = q_butt.get(entity) else { return; };
     commands.entity(butt.panel).despawn_recursive();
 }

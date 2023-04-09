@@ -64,21 +64,26 @@ impl EditorAssets {
     }
 }
 
-pub(crate) struct EditorAssetsPlugin<S: StateData> {
+pub(crate) struct EditorAssetsPlugin<S: States> {
     pub asset_load_state: S,
     pub editor_state: S,
 }
 
-impl<S: StateData> Plugin for EditorAssetsPlugin<S> {
+impl<S: States> Plugin for EditorAssetsPlugin<S> {
     fn build(&self, app: &mut App) {
         app.add_loading_state(
             LoadingState::new(self.asset_load_state.clone())
                 .continue_to_state(self.editor_state.clone())
-                .with_dynamic_collections::<StandardDynamicAssetCollection>(vec![
-                    "iyes2d_editor.assets",
-                ])
-                .with_collection::<EditorAssets>()
         );
-        app.add_exit_system(self.editor_state.clone(), remove_resource::<EditorAssets>);
+        app.add_dynamic_collection_to_loading_state::<_, StandardDynamicAssetCollection>(
+            self.asset_load_state.clone(),
+            "iyes2d_editor.assets.ron"
+        );
+        app.add_collection_to_loading_state::<_, EditorAssets>(self.asset_load_state.clone());
+        app.add_systems(
+            (
+                remove_resource::<EditorAssets>,
+            ).in_schedule(OnExit(self.editor_state.clone()))
+        );
     }
 }

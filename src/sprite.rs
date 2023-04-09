@@ -3,16 +3,17 @@ use crate::crate_prelude::*;
 use crate::camera::WorldCursor;
 use crate::selection::{Selected, Selection, SelectionBundle};
 
-pub(crate) struct SpriteEditorPlugin<S: StateData> {
+pub(crate) struct SpriteEditorPlugin<S: States> {
     pub state: S,
 }
 
-impl<S: StateData> Plugin for SpriteEditorPlugin<S> {
+impl<S: States> Plugin for SpriteEditorPlugin<S> {
     fn build(&self, app: &mut App) {
         app.add_system(
             select_sprites_mouseclick
-                .run_in_state(self.state.clone())
-                .run_for_tools(Tool::SelectEntities)
+                .in_set(EditorSet)
+                .before(EditorFlush)
+                .run_if(with_tools(Tool::SelectEntities))
         );
     }
 }

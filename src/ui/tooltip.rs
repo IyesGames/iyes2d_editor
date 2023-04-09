@@ -1,22 +1,19 @@
+use bevy::window::PrimaryWindow;
+
 use crate::crate_prelude::*;
 
-pub(crate) struct TooltipPlugin<S: StateData> {
+pub(crate) struct TooltipPlugin<S: States> {
     pub state: S,
 }
 
-impl<S: StateData> Plugin for TooltipPlugin<S> {
+impl<S: States> Plugin for TooltipPlugin<S> {
     fn build(&self, app: &mut App) {
-        app.add_system(
-            tooltip_spawner
-                .run_in_state(self.state.clone())
-        );
-        app.add_system(
-            fixup_tooltippables
-                .run_in_state(self.state.clone())
-        );
-        app.add_system(
-            tooltip_despawner
-                .run_in_state(self.state.clone())
+        app.add_systems(
+            (
+                tooltip_spawner,
+                fixup_tooltippables,
+                tooltip_despawner,
+            ).in_set(EditorSet)
         );
     }
 }
@@ -78,7 +75,7 @@ fn tooltip_spawner(
     mut commands: Commands,
     time: Res<Time>,
     assets: Res<EditorAssets>,
-    windows: Res<Windows>,
+    query_windows: Query<&Window, With<PrimaryWindow>>,
     mut query: Query<(Entity, &Interaction, &TooltipText, &mut TooltipSpawnTimer)>,
 ) {
     for (e, interaction, tooltip_text, mut timer) in &mut query {
@@ -93,7 +90,7 @@ fn tooltip_spawner(
                             background_color: BackgroundColor(Color::BLACK),
                             style: Style {
                                 position_type: PositionType::Absolute,
-                                position: compute_tooltip_position(windows.primary()),
+                                position: compute_tooltip_position(query_windows.single()),
                                 padding: UiRect::all(Val::Px(2.0)),
                                 ..Default::default()
                             },

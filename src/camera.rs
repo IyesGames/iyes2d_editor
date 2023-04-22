@@ -132,10 +132,15 @@ fn camera_rotate(
 }
 
 fn camera_zoom(
+    kbd: Res<Input<KeyCode>>,
     mut motion: EventReader<MouseWheel>,
     mut last_zoom: Local<Option<Instant>>,
     mut q_camera: Query<&mut Transform, With<EditorCamera>>,
 ) {
+    if !kbd.pressed(KeyCode::LShift) {
+        return;
+    }
+
     // TODO: this feels awful but will do for now
     // just throttle how often we can zoom
     if let Some(last) = &*last_zoom {

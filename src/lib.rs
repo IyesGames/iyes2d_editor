@@ -25,6 +25,7 @@ pub mod prelude {
 /// Common prelude for internal use
 mod crate_prelude {
     pub use bevy::prelude::*;
+    pub use bevy::input::common_conditions::*;
     pub use bevy::ui::FocusPolicy;
     pub use bevy::utils::{HashMap, HashSet, Duration, Instant};
     pub use bevy::ecs::schedule::States;
@@ -89,9 +90,14 @@ pub struct EditorPlugin<S: States> {
     pub editor_state: S,
 }
 
+/// Set for all editor systems
+///
+/// If you need additional configuration (beyond just running in the given state),
+/// you can add it to this system set.
 #[derive(SystemSet, Debug, PartialEq, Eq, Clone, Copy, Hash, Default)]
 pub struct EditorSet;
 
+/// If something needs apply_system_buffers, order before/after this
 #[derive(SystemSet, Debug, PartialEq, Eq, Clone, Copy, Hash, Default)]
 pub(crate) struct EditorFlush;
 
